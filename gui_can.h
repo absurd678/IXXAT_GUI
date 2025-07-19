@@ -39,14 +39,13 @@ private:
     ReceiverFromCAN readCAN;
 
     // Потоки
-    QThread sendThread;
-    QThread receiveThread;
+    std::thread sendThread;
+    std::thread receiveThread;
     QThread updateThread;
 
     // Таймер для обновления таблицы
     QTimer *updateTimer;
-    QTimer *updateWriteCANTimer;
-    QTimer *updateReadCANTimer;
+
 };
 
 

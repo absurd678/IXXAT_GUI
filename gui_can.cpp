@@ -4,6 +4,7 @@
 //#include <QLable>
 #include <QTimer>
 #include <QHBoxLayout>
+#include "thread"
 
 GUI_CAN::GUI_CAN(QWidget *parent)
     : QMainWindow(parent),
@@ -56,17 +57,16 @@ GUI_CAN::GUI_CAN(QWidget *parent)
     connect(stopButton, &QPushButton::clicked, this, &GUI_CAN::onStopClicked);
 
     // Настройка потоков
-    // Поток отправки
-    updateWriteCANTimer = new QTimer(this);
-    connect(updateWriteCANTimer, &QTimer::timeout, this, &GUI_CAN::writeCAN.canSendProcess);
-    connect(&sendThread, &QThread::started, [this]() {
-        writeCAN.canSendProcess();
+    sendThread = std::thread([this]() {
+        while (true){
+            if (writeCAN.flagSend == false) continue;
+            writeCAN.canSendProcess();
+        }
     });
 
-    // Поток приема
-    connect(&receiveThread, &QThread::started, [this]() {
-        readCAN.receiveFromCAN();
-    });
+    receiveThread = std::thread([this]() {
+            readCAN.receiveFromCAN();
+        });
 
     // Таймер для обновления таблицы приема
     updateTimer = new QTimer(this);
@@ -74,16 +74,15 @@ GUI_CAN::GUI_CAN(QWidget *parent)
     updateTimer->start(100); // Обновление каждые 100 мс
 
     // Запуск потоков
-    sendThread.start();
-    receiveThread.start();
+    /*sendThread.start();
+    receiveThread.start();*/
 }
 
 GUI_CAN::~GUI_CAN()
 {
-    sendThread.quit();
-    receiveThread.quit();
-    sendThread.wait();
-    receiveThread.wait();
+    sendThread.join();
+    receiveThread.join();
+
 }
 
 void GUI_CAN::initTable(QTableWidget *table, const std::vector<frameParam> &data,

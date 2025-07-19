@@ -105,8 +105,8 @@ void SenderToCAN::convertToCAN(const frameParam& frame, unsigned char output[BYT
     int j=0;
 
     for (int i = 0; i < 4; i++) {
-        dataCAN[j] = (package[i]>>8);
-        dataCAN[++j] = (package[i]);
+        dataCAN[j] = (package[i]);
+        dataCAN[++j] = (package[i]>>8);
         j++;
     }
 
@@ -122,9 +122,9 @@ int SenderToCAN::sendToCAN(frameParam frameJSON){
     frameCAN.can_dlc = 8;
 
     unsigned char candata[8];
-    printf("\njson0 %x [8] %x %x %x %x\n", frameJSON.param1.id, frameJSON.param1.data, frameJSON.param2.data, frameJSON.param3.data, frameJSON.param4.data);
+    if (frameJSON.param1.id == 65550) printf("\njson0 %x [8] %x %x %x %x\n", frameJSON.param1.id, frameJSON.param1.data, frameJSON.param2.data, frameJSON.param3.data, frameJSON.param4.data);
     convertToCAN(frameJSON, candata);
-    //printf("\ncan0 %x [8] %x%x\n", frameJSON.param1.id, candata);
+
     memcpy(frameCAN.data, candata, 8);
     if (write(this->DescriptorCAN, &frameCAN, sizeof(struct can_frame)) != sizeof(struct can_frame)) {
         perror("Write");
@@ -219,12 +219,13 @@ void ReceiverFromCAN::receiveFromCAN(){
          // Преобразование в структуру
          frameParam newFrame = convertFromCAN(frameCAN.data);
           //Определить формат CAN ID
-          /*printf("Print the received CAN ID = %d\n", */
+
              (frameCAN.can_id & CAN_EFF_FLAG) ? (frameCAN.can_id &= CAN_EFF_MASK)
                                            : (frameCAN.can_id &= CAN_SFF_MASK);
 
          newFrame.param1.id = frameCAN.can_id;
-
+         if (newFrame.param1.id == 65550)
+             printf("\njson1 %x [8] %x %x %x %x\n", newFrame.param1.id, newFrame.param1.data, newFrame.param2.data, newFrame.param3.data, newFrame.param4.data);
          // Поиск соответствующего фрейма в массиве по ID
          for (auto& frame : this->DataArray) {
              // Предполагаем, что ID хранится в param1
@@ -251,8 +252,8 @@ void ReceiverFromCAN::receiveFromCAN(){
          }
 
          if (allReceived) {
-             printf("All parameters received!\n");
-             //break;
+             //printf("All parameters received!\n");
+
          }
      }
 }
