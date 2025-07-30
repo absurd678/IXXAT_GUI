@@ -9,14 +9,14 @@
 #include <QThread>
 #include "interfaceCAN.h"
 
-#define PATH_TO_JSON "/home/artem/dev/projects/IXXAT_App/ПИВ_Параметры.json"
+#define PATH_TO_JSON "/home/user/dev/IXXAT_App/ПИВ_Параметры.json"
 
 class GUI_CAN : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    GUI_CAN(QWidget *parent = nullptr);
+    GUI_CAN(QString jsonPath, QWidget *parent = nullptr);
     ~GUI_CAN();
 
 private slots:
@@ -27,6 +27,9 @@ private slots:
 private:
     void initTable(QTableWidget *table, const std::vector<frameParam> &data,
                    std::string can_name);
+
+    // Путь к json-файлу с параметрами
+    QString jsonPath;
 
     // GUI элементы
     QTableWidget *tableSend;

@@ -71,9 +71,11 @@ public:
 class SenderToCAN : public ICAN{    // Отправитель
  public:
     //----------------Поля--------------------
-    std::atomic<bool> flagSend = false;  // Разрешение на отправку
+    std::atomic<bool> flagSend;  // Разрешение на отправку
     //----------------Методы------------------
-    SenderToCAN(std::string canNAME) : ICAN(canNAME) {}
+    SenderToCAN(std::string canNAME) : ICAN(canNAME) {
+        flagSend = false;
+    }
     ~SenderToCAN() {}
     // Функция преобразования в CAN-формат
     void convertToCAN(const frameParam& frame, unsigned char output[BYTESSIZE]);

@@ -6,14 +6,15 @@
 #include <QHBoxLayout>
 #include "thread"
 
-GUI_CAN::GUI_CAN(QWidget *parent)
+GUI_CAN::GUI_CAN(QString jsonPath, QWidget *parent)
     : QMainWindow(parent),
       writeCAN("can0"),
       readCAN("can1")
 {
+    this->jsonPath = jsonPath;
     // Загрузка данных из JSON
-    writeCAN.JSONtoDataArray(PATH_TO_JSON);
-    readCAN.JSONtoDataArray(PATH_TO_JSON);
+    writeCAN.JSONtoDataArray(this->jsonPath.toStdString());
+    readCAN.JSONtoDataArray(this->jsonPath.toStdString());
 
     // Создание таблиц
     tableSend = new QTableWidget(this);
