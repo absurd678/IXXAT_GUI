@@ -1,24 +1,25 @@
 #include "gui_can.h"
 #include <QHeaderView>
 #include <QVBoxLayout>
-//#include <QLable>
 #include <QTimer>
 #include <QHBoxLayout>
 #include "thread"
 
 GUI_CAN::GUI_CAN(QString jsonPath, QWidget *parent)
     : QMainWindow(parent),
-      writeCAN("can0"),
-      readCAN("can1")
+      writeCAN("can0"), // Писатель на CAN0, читатель - на CAN1
+      readCAN("can1"),
+    jsonPath(std::move(jsonPath)),
+    tableSend(new QTableWidget(this)),
+    tableReceive(new QTableWidget(this)),
+    startButton(new QPushButton(tr("Старт"), this)),
+    stopButton(new QPushButton(tr("Стоп"), this)),
+    updateTimer(new QTimer(this))
 {
-    this->jsonPath = jsonPath;
+
     // Загрузка данных из JSON
     writeCAN.JSONtoDataArray(this->jsonPath.toStdString());
     readCAN.JSONtoDataArray(this->jsonPath.toStdString());
-
-    // Создание таблиц
-    tableSend = new QTableWidget(this);
-    tableReceive = new QTableWidget(this);
 
     // Настройка таблиц
     QStringList headers = {"№ CAN", "ID", "Кол. байтов", "Парам. 1", "Парам. 2", "Парам. 3", "Парам. 4"};
@@ -31,18 +32,12 @@ GUI_CAN::GUI_CAN(QString jsonPath, QWidget *parent)
     initTable(tableSend, writeCAN.DataArray, "can0");
     initTable(tableReceive, readCAN.DataArray, "can1");
 
-    // Кнопки
-    startButton = new QPushButton("Старт", this);
-    stopButton = new QPushButton("Стоп", this);
-
     // Компоновка
     QWidget *centralWidget = new QWidget(this);
     QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
 
     // Таблицы
-    //mainLayout->addWidget(new QLabel("Отправка (CAN0):"));
     mainLayout->addWidget(tableSend);
-    //mainLayout->addWidget(new QLabel("Прием (CAN1):"));
     mainLayout->addWidget(tableReceive);
 
     // Кнопки
@@ -56,6 +51,8 @@ GUI_CAN::GUI_CAN(QString jsonPath, QWidget *parent)
     // Подключение кнопок
     connect(startButton, &QPushButton::clicked, this, &GUI_CAN::onStartClicked);
     connect(stopButton, &QPushButton::clicked, this, &GUI_CAN::onStopClicked);
+    // Таймер для обновления таблицы приема
+    connect(updateTimer, &QTimer::timeout, this, &GUI_CAN::updateReceivedTable);
 
     // Настройка потоков
     sendThread = std::thread([this]() {
@@ -66,17 +63,10 @@ GUI_CAN::GUI_CAN(QString jsonPath, QWidget *parent)
     });
 
     receiveThread = std::thread([this]() {
-            readCAN.receiveFromCAN();
-        });
+        readCAN.receiveFromCAN();
+    });
 
-    // Таймер для обновления таблицы приема
-    updateTimer = new QTimer(this);
-    connect(updateTimer, &QTimer::timeout, this, &GUI_CAN::updateReceivedTable);
     updateTimer->start(100); // Обновление каждые 100 мс
-
-    // Запуск потоков
-    /*sendThread.start();
-    receiveThread.start();*/
 }
 
 GUI_CAN::~GUI_CAN()

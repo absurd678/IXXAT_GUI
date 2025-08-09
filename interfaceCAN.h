@@ -6,11 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-
 #include <linux/can.h>
 #include <linux/can/raw.h>
 #include <nlohmann/json.hpp>
@@ -22,22 +20,21 @@
 #include <cmath>
 #include <csignal>
 
+// Маски и флаги для настройки CAN интерфейса
 /* special address description flags for the CAN_ID */
 #define CAN_EFF_FLAG 0x80000000U /* EFF/SFF is set in the MSB */
 #define CAN_RTR_FLAG 0x40000000U /* remote transmission request */
 #define CAN_ERR_FLAG 0x20000000U /* error message frame */
-
 /* valid bits in CAN ID for frame formats */
 #define CAN_SFF_MASK 0x000007FFU /* standard frame format (SFF) */
 #define CAN_EFF_MASK 0x1FFFFFFFU /* extended frame format (EFF) */
 #define CAN_ERR_MASK 0x1FFFFFFFU /* omit EFF, RTR, ERR flags */
 
-#define BYTESSIZE 8
-
+#define BYTESSIZE 8 // Количество байт в пакете CAN
 
 using json = nlohmann::json;
 
-struct Param {      // Параметр из json файла
+struct Param {      // Параметр из json файла (некоторые из полей, не все берутся)
     int id = 0; // Идентификатор кадра(dec)
     int param_num = 0;  // Параметр
     std::string param_name; // Наименование параметра
@@ -52,7 +49,7 @@ struct frameParam {     // Пакет CAN до конвертации
     float frameFreq = 0.0;  // Частота всего параметра (максимальная среди 4-х)
 };
 
-class ICAN{ // родитель отправителя и получателя
+class ICAN{ // Интерфейс отправителя и получателя
 
 public:
     //-------------Поля----------------
@@ -63,8 +60,8 @@ public:
     // Функция для вычисления максимальной частоты в frameParam
     ICAN(std::string canNAME);  // Нужно задать canX, X=0,...,N
     ~ICAN() {}
-    int getMaxFreq(const frameParam& fp);
-    void JSONtoDataArray(const std::string& filepath);
+    int getMaxFreq(const frameParam& fp);   // Найти максимальную частоту в структуре frameParam
+    void JSONtoDataArray(const std::string& filepath);  // Чтение JSON файла и заполнение DataArray
 
 };
 
